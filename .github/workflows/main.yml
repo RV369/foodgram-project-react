@@ -94,10 +94,10 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
-          cd Foodgram
+          cd Foodgram/infra
           sudo docker compose -f docker-compose.production.yml pull
           sudo docker-compose stop
-          sudo docker-compose rm -f backend
+          sudo docker-compose rm -f ../backend
           rm .env
           touch .env
           echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
