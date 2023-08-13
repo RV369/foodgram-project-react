@@ -192,7 +192,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         detail=False, methods=['get'], permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request, **kwargs):
-        print(request)
         ingredients = (
             RecipeIngredient.objects.filter(
                 recipe__shopping_recipe__user=request.user
@@ -205,13 +204,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 'ingredient__measurement_unit',
             )
         )
-        print(ingredients)
         shopping_list = []
         [
             shopping_list.append('{} - {} {}.'.format(*ingredient))
             for ingredient in ingredients
         ]
-        print(shopping_list)
         response = HttpResponse(
             'Cписок покупок:\n' + '\n'.join(shopping_list),
             content_type='text/plain',
