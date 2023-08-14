@@ -1,12 +1,17 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
 class User(AbstractUser):
-    email = models.EmailField(max_length=254, unique=True)
-    username = models.CharField(max_length=150, unique=True)
-    first_name = models.CharField('имя', max_length=150, blank=True)
-    last_name = models.CharField('фамилия', max_length=150, blank=True)
+    email = models.EmailField(max_length=settings.LEN_EMAIL, unique=True)
+    username = models.CharField(max_length=settings.LEN_STRING, unique=True)
+    first_name = models.CharField(
+        'имя', max_length=settings.LEN_STRING, blank=True
+    )
+    last_name = models.CharField(
+        'фамилия', max_length=settings.LEN_STRING, blank=True
+    )
 
     class Meta:
         ordering = ['id']
