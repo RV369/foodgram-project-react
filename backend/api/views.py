@@ -1,4 +1,3 @@
-from django.core import exceptions
 from django.db.models import Sum
 from django.shortcuts import HttpResponse, get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -51,8 +50,8 @@ class CustomUserViewSet(UserViewSet):
         serializer = serializers.Set_PasswordSerializer(
             request.user, data=request.data
         )
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
@@ -64,14 +63,6 @@ class CustomUserViewSet(UserViewSet):
         user = self.request.user
         author = get_object_or_404(User, id=kwargs['id'])
         if request.method == 'POST':
-            if user == author:
-                raise exceptions.ValidationError(
-                    'Нет смысла подписаться на себя.'
-                )
-            if Subscriptions.objects.filter(user=user, author=author).exists():
-                raise exceptions.ValidationError(
-                    'Подписка на этого автора у вас уже есть.'
-                )
             serializer = serializers.SubscriptionsSerializer(data=request.data)
             serializer.is_valid(raise_exception=False)
             Subscriptions.objects.create(user=user, author=author)
@@ -147,19 +138,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 recipe, data=request.data, context={'request': request}
             )
             serializer.is_valid(raise_exception=True)
-            if not Favorites.objects.filter(
-                user=request.user, recipe=recipe
-            ).exists():
-                Favorites.objects.create(user=request.user, recipe=recipe)
-                return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
-                )
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        if request.method == 'DELETE':
-            get_object_or_404(
-                Favorites, user=request.user, recipe=recipe
-            ).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            Favorites.objects.create(user=request.user, recipe=recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        get_object_or_404(Favorites, user=request.user, recipe=recipe).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
@@ -174,19 +156,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 recipe, data=request.data, context={'request': request}
             )
             serializer.is_valid(raise_exception=True)
-            if not Shopping_cart.objects.filter(
-                user=request.user, recipe=recipe
-            ).exists():
-                Shopping_cart.objects.create(user=request.user, recipe=recipe)
-                return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
-                )
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        if request.method == 'DELETE':
-            get_object_or_404(
-                Shopping_cart, user=request.user, recipe=recipe
-            ).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            Shopping_cart.objects.create(user=request.user, recipe=recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        get_object_or_404(
+            Shopping_cart, user=request.user, recipe=recipe
+        ).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=False, methods=['get'], permission_classes=(IsAuthenticated,)

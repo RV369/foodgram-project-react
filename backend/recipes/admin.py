@@ -6,6 +6,7 @@ from recipes import models
 class RecipesIngredientInline(admin.TabularInline):
     model = models.RecipeIngredient
     extra = 1
+    min_num = 1
 
 
 @admin.register(models.Ingredient)
@@ -52,38 +53,3 @@ class FavoritesAdmin(admin.ModelAdmin):
 class Shopping_CartAdmin(admin.ModelAdmin):
     list_display = ('pk', 'user', 'recipe')
     list_editable = ('user', 'recipe')
-
-
-# class RecipesIngredientInline(admin.TabularInline):
-#     model = models.RecipeIngredient
-#     extra = 1
-
-
-# @admin.register(Tag)
-# class TagAdmin(admin.ModelAdmin):
-#     pass
-
-
-# @admin.register(Ingredient)
-# class IngredientAdmin(admin.ModelAdmin):
-#     pass
-
-
-# @admin.register(Favorites)
-# class FavoritesAdmin(admin.ModelAdmin):
-#     pass
-
-
-# @admin.register(Shopping_cart)
-# class Shopping_cartAdmin(admin.ModelAdmin):
-#     pass
-
-
-# @admin.register(RecipeIngredient)
-# class RecipeIngredientAdmin(admin.ModelAdmin):
-#     pass
-
-
-# @admin.register(models.Recipe)
-# class RecipeAdmin(admin.ModelAdmin):
-#     inlines = (RecipesIngredientInline, )

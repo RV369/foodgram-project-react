@@ -38,3 +38,6 @@ class Subscriptions(models.Model):
         ordering = ['-date_subscriptions']
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки пользователей'
+
+    def __str__(self):
+        return f'{self.user.username} - {self.author.username}'

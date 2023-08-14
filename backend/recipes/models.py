@@ -1,25 +1,29 @@
-from django.core.validators import MinValueValidator, RegexValidator
+from django.conf import settings
+from django.core import validators
 from django.db import models
 
 from users.models import User
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=200)
+    name = models.CharField(verbose_name='Тег', max_length=settings.MAX_LENGTH)
     color = models.CharField(
-        verbose_name='Код цвета',
+        verbose_name='Код цвета тега',
         max_length=7,
         null=True,
         validators=[
-            RegexValidator(
+            validators.RegexValidator(
                 '^#([a-fA-F0-9]{6})',
                 message='Пропишите в поле код выбранного цвета.',
             )
         ],
     )
-    slug = models.SlugField(unique=True, max_length=200)
+    slug = models.SlugField(
+        verbose_name='Слаг тега', unique=True, max_length=settings.MAX_LENGTH
+    )
 
     class Meta:
+        ordering = ['name']
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
 
@@ -28,8 +32,12 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=200)
-    measurement_unit = models.CharField(max_length=200)
+    name = models.CharField(
+        verbose_name='Ингредиент', max_length=settings.MAX_LENGTH
+    )
+    measurement_unit = models.CharField(
+        verbose_name='Единица измерения', max_length=settings.MAX_LENGTH
+    )
 
     class Meta:
         ordering = ['name']
@@ -41,24 +49,42 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
-    tags = models.ManyToManyField(Tag)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    tags = models.ManyToManyField(Tag, verbose_name='Тег рецепта')
+    author = models.ForeignKey(
+        User, verbose_name='Автор рецепта', on_delete=models.CASCADE
+    )
     image = models.ImageField(
-        upload_to='recipes/images/', null=True, blank=True, default=None
+        upload_to='recipes/images/',
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name='Фотография готового блюда',
     )
-    name = models.CharField(max_length=200)
+    name = models.CharField(
+        max_length=settings.MAX_LENGTH, verbose_name='Наименование рецепта'
+    )
     text = models.TextField(
-        max_length=200, null=True, blank=True, default=None
+        max_length=settings.MAX_LENGTH,
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name='Рецепт',
     )
-    cooking_time = models.PositiveBigIntegerField(
-        validators=[MinValueValidator(1)]
+    cooking_time = models.PositiveSmallIntegerField(
+        verbose_name='Время приготовления блюда',
+        validators=[
+            validators.MinValueValidator(settings.MIN_LIMIT),
+            validators.MaxValueValidator(settings.MAX_LIMIT),
+        ],
     )
     ingredients = models.ManyToManyField(
         Ingredient,
+        verbose_name='Ингредиенты в рецепте',
         through='RecipeIngredient',
         through_fields=('recipe', 'ingredient'),
     )
     pub_date = models.DateTimeField(
+        verbose_name='Дата публикации рецепта',
         auto_now_add=True,
         null=True,
         blank=True,
@@ -75,12 +101,26 @@ class Recipe(models.Model):
 
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
-        Recipe, related_name='recipe_ingredients', on_delete=models.CASCADE
+        Recipe,
+        related_name='recipe_ingredients',
+        on_delete=models.CASCADE,
+        verbose_name='Набор ингредиентов в рецепте',
     )
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    amount = models.PositiveBigIntegerField(validators=[MinValueValidator(1)])
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+        verbose_name='Ингредиенты в рецепте',
+    )
+    amount = models.PositiveSmallIntegerField(
+        verbose_name='Количество',
+        validators=[
+            validators.MinValueValidator(settings.MIN_LIMIT),
+            validators.MaxValueValidator(settings.MAX_LIMIT),
+        ],
+    )
 
     class Meta:
+        ordering = ['recipe']
         verbose_name = 'Ингредиенты для приготовления рецепта'
         verbose_name_plural = 'Ингредиенты для рецептов'
         constraints = [
@@ -94,7 +134,9 @@ class RecipeIngredient(models.Model):
 
 
 class Shopping_cart(models.Model):
-    Ingredients = models.ManyToManyField(Ingredient, blank=True)
+    Ingredients = models.ManyToManyField(
+        Ingredient, verbose_name='Ингредиент в кщрзине', blank=True
+    )
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -109,6 +151,7 @@ class Shopping_cart(models.Model):
     )
 
     class Meta:
+        ordering = ['user']
         verbose_name = 'Корзина'
         verbose_name_plural = 'Корзины покупок пользователей'
         constraints = [
@@ -136,6 +179,7 @@ class Favorites(models.Model):
     )
 
     class Meta:
+        ordering = ['user']
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
         constraints = [
