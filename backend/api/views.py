@@ -4,9 +4,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from django.db.models.query_utils import Q
 
 from api import serializers
 from api.filters import RecipesFilter
@@ -92,13 +92,18 @@ class TagViewsSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
 
 
-class IngredientViewSet(viewsets.ModelViewSet):
-    queryset = Ingredient.objects.all()
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.IngredientSerializer
-    permission_classes = (AllowAny,)
     pagination_class = None
-    filter_backends = [SearchFilter]
-    search_fields = ['name']
+
+    def get_queryset(self):
+        queryset = Ingredient.objects.all()
+        name = self.request.query_params.get("name")
+        if name is not None:
+            filter_cyrillic = queryset.filter(name__istartswith=name)
+            filter_latin = queryset.filter(~Q(name__istartswith=name) & Q(name__icontains=name))
+            queryset = list(filter_cyrillic) + list(filter_latin)
+        return queryset
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
