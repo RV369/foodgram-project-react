@@ -1,4 +1,5 @@
 from django.db.models import Sum
+from django.db.models.query_utils import Q
 from django.shortcuts import HttpResponse, get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
@@ -6,7 +7,6 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from django.db.models.query_utils import Q
 
 from api import serializers
 from api.filters import RecipesFilter
@@ -95,14 +95,17 @@ class TagViewsSet(viewsets.ModelViewSet):
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.IngredientSerializer
     pagination_class = None
+    queryset = Ingredient.objects.all()
 
     def get_queryset(self):
         queryset = Ingredient.objects.all()
-        name = self.request.query_params.get("name")
+        name = self.request.query_params.get('name')
         if name is not None:
-            filter_cyrillic = queryset.filter(name__istartswith=name)
-            filter_latin = queryset.filter(~Q(name__istartswith=name) & Q(name__icontains=name))
-            queryset = list(filter_cyrillic) + list(filter_latin)
+            filter_one_input = queryset.filter(name__istartswith=name)
+            filter_center_input = queryset.filter(
+                ~Q(name__istartswith=name) & Q(name__icontains=name)
+            )
+            queryset = list(filter_one_input) + list(filter_center_input)
         return queryset
 
 
