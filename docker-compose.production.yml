@@ -4,6 +4,7 @@ volumes:
   db_value:
   static_value:
   media_value:
+  docs:
 
 services:
 
@@ -21,6 +22,7 @@ services:
       volumes:
         - static_value:/app/static/
         - media_value:/app/media/
+        - docs:/app/api/docs/
       depends_on:
         - db
 
@@ -40,7 +42,7 @@ services:
       - "8008:80"
     volumes:
       - ./frontend/build:/usr/share/nginx/html/
-      - ./docs/:/usr/share/nginx/html/api/docs/
+      - docs:/var/html/api/docs/
       - static_value:/var/html/static/
       - media_value:/var/html/media/
     depends_on:
