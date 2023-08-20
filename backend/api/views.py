@@ -1,4 +1,3 @@
-from django.db.models import Sum
 from django.db.models.query_utils import Q
 from django.shortcuts import HttpResponse, get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -172,33 +171,33 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
-        detail=False, methods=['get'], permission_classes=(IsAuthenticated,)
+        detail=False, methods=['get'], permission_classes=[IsAuthenticated]
     )
-    def download_shopping_cart(self, request, **kwargs):
-        ingredients = (
-            RecipeIngredient.objects.filter(
-                recipe__shopping_recipe__user=request.user
-            )
-            .values('ingredient')
-            .annotate(total_amount=Sum('amount'))
-            .values_list(
-                'ingredient__name',
-                'total_amount',
-                'ingredient__measurement_unit',
-            )
-        )
-        shopping_list = []
-        [
-            shopping_list.append('{} - {} {}.'.format(*ingredient))
-            for ingredient in ingredients
+    def download_shopping_cart(self, request):
+        user = request.user
+        shopping = user.shopping_user.all()
+        shopping_list = {}
+        for item in shopping:
+            recipe = item.recipe
+            ingredients = RecipeIngredient.objects.filter(recipe=recipe)
+            for ingredient in ingredients:
+                name = ingredient.ingredient.name
+                amount = ingredient.amount
+                measurement_unit = ingredient.ingredient.measurement_unit
+                if name not in shopping_list:
+                    shopping_list[name] = {
+                        'measurement_unit': measurement_unit,
+                        'amount': amount,
+                    }
+                else:
+                    shopping_list[name]['amount'] += amount
+        shop_list = [
+            f"{name} - {data['amount']}{data['measurement_unit']}"
+            for name, data in shopping_list.items()
         ]
-        response = HttpResponse(
-            'Cписок покупок:\n' + '\n'.join(shopping_list),
+        responce = HttpResponse(
+            'Cписок покупок:\n' + '\n'.join(shop_list),
             content_type='text/plain',
         )
-        content = '\n'.join(shopping_list)
-        response = HttpResponse(content, content_type='text/plain')
-        response[
-            'Content-Disposition'
-        ] = 'attachment; filename="shopping_list.txt"'
-        return response
+        responce['Content-Disposition'] = 'attachment; filename=shop_list.txt'
+        return responce
