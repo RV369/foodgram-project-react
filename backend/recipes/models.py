@@ -54,7 +54,7 @@ class Recipe(models.Model):
         User,
         related_name='recipes',
         verbose_name='Автор рецепта',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
     )
     image = models.ImageField(
         upload_to='recipes/images/',

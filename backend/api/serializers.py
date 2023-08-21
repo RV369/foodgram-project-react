@@ -7,7 +7,7 @@ from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
-from users.models import User, Subscriptions
+from users.models import User
 
 
 class UserSerializer(UserSerializer):
@@ -157,18 +157,19 @@ class SubscribeListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 
-                  'id',
-                  'username', 
-                  'first_name',
-                  'last_name', 
-                  'is_subscribed',
-                  'recipes', 
-                  'recipes_count',
+        fields = (
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'recipes',
+            'recipes_count',
         )
 
     def validate(self, validated_data):
-        if (self.context['request'].user == validated_data):
+        if self.context['request'].user == validated_data:
             raise serializers.ValidationError(
                 {'errors': 'Нет смысла подписаться на себя.'}
             )
