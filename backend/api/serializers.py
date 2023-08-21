@@ -7,7 +7,7 @@ from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
-from users.models import User
+from users.models import User, Subscriptions
 
 
 class UserSerializer(UserSerializer):
@@ -126,22 +126,53 @@ class SubscriptionsSerializer(serializers.ModelSerializer):
             'recipes_count',
         )
 
-    def validate(self, validated_data):
+    def get_is_subscribed(self, validated_data):
         user = self.context['request'].user
-        author = validated_data
-        try:
-            user == author
-        except exceptions.ValidationError:
+        return (
+            user.is_authenticated
+            and user.subscriber.filter(author=validated_data).exists()
+        )
+
+    def get_recipes_count(self, validated_data):
+        return validated_data.recipes.count()
+
+    def get_recipes(self, validated_data):
+        request = self.context.get('request')
+        limit = request.GET.get('recipes_limit')
+        recipes = validated_data.recipes.all()
+        if limit:
+            recipes = recipes[: int(limit)]
+        serializer = RecipeListSerializer(recipes, many=True, read_only=True)
+        return serializer.data
+
+
+class SubscribeListSerializer(serializers.ModelSerializer):
+    """Подписка на автора и удаление подписки."""
+
+    email = serializers.ReadOnlyField()
+    username = serializers.ReadOnlyField()
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = RecipeListSerializer(many=True, read_only=True)
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('email', 
+                  'id',
+                  'username', 
+                  'first_name',
+                  'last_name', 
+                  'is_subscribed',
+                  'recipes', 
+                  'recipes_count',
+        )
+
+    def validate(self, validated_data):
+        if (self.context['request'].user == validated_data):
             raise serializers.ValidationError(
-                'Нет смысла подписаться на себя.'
+                {'errors': 'Нет смысла подписаться на себя.'}
             )
-        try:
-            user.subscriber.filter(author=validated_data).exists()
-        except exceptions.ValidationError:
-            raise serializers.ValidationError(
-                'Подписка на этого автора у вас уже есть.'
-            )
-        return super().validate(validated_data)
+        return validated_data
 
     def get_is_subscribed(self, validated_data):
         user = self.context['request'].user
@@ -151,19 +182,12 @@ class SubscriptionsSerializer(serializers.ModelSerializer):
         )
 
     def get_recipes_count(self, validated_data):
-        return validated_data.subscriber.count()
-
-    def get_recipes(self, validated_data):
-        request = self.context.get('request')
-        limit = request.GET.get('recipes_limit')
-        recipes = validated_data.subscriber.all()
-        if limit:
-            recipes = recipes[: int(limit)]
-        serializer = RecipeListSerializer(recipes, many=True, read_only=True)
-        return serializer.data
+        return validated_data.recipes.count()
 
 
 class Hex2NameColor(serializers.Field):
+    """Сериалайзер для поля цветов тега."""
+
     def to_representation(self, value):
         return value
 

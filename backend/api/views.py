@@ -43,7 +43,9 @@ class CustomUserViewSet(UserViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
-        detail=False, methods=['post'], permission_classes=(IsAuthenticated,)
+        detail=False, 
+        methods=['post'], 
+        permission_classes=(IsAuthenticated,)
     )
     def set_password(self, request):
         serializer = serializers.Set_PasswordSerializer(
@@ -51,23 +53,25 @@ class CustomUserViewSet(UserViewSet):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({'detail': 'Пароль изменен!'}, status=status.HTTP_204_NO_CONTENT)
 
     @action(
+        detail=True,
         methods=['post', 'delete'],
         permission_classes=(IsAuthenticated,),
-        detail=True,
+        pagination_class=None,
     )
     def subscribe(self, request, **kwargs):
         user = self.request.user
         author = get_object_or_404(User, id=kwargs['id'])
         if request.method == 'POST':
-            serializer = serializers.SubscriptionsSerializer(data=request.data)
-            serializer.is_valid(raise_exception=False)
+            serializer = serializers.SubscribeListSerializer(
+                author, data=request.data, context={"request": request})
+            serializer.is_valid(raise_exception=True)
             Subscriptions.objects.create(user=user, author=author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         get_object_or_404(Subscriptions, user=user, author=author).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({'detail': 'Подписка удалена'}, status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=False,
@@ -171,14 +175,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
-        detail=False, methods=['get'], permission_classes=[IsAuthenticated]
+        detail=False, 
+        methods=['get'], 
+        permission_classes=[IsAuthenticated]
     )
     def download_shopping_cart(self, request):
         user = request.user
         shopping = user.shopping_user.all()
         shopping_list = {}
-        for item in shopping:
-            recipe = item.recipe
+        for shop in shopping:
+            recipe = shop.recipe
             ingredients = RecipeIngredient.objects.filter(recipe=recipe)
             for ingredient in ingredients:
                 name = ingredient.ingredient.name

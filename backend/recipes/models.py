@@ -51,7 +51,10 @@ class Ingredient(models.Model):
 class Recipe(models.Model):
     tags = models.ManyToManyField(Tag, verbose_name='Тег рецепта')
     author = models.ForeignKey(
-        User, verbose_name='Автор рецепта', on_delete=models.CASCADE
+        User,
+        related_name='recipes',
+        verbose_name='Автор рецепта',
+        on_delete=models.CASCADE
     )
     image = models.ImageField(
         upload_to='recipes/images/',
