@@ -16,7 +16,7 @@ Cайт Foodgram, «Продуктовый помощник». Пользова�
 - Установите Docker Desktop.
 - Создайте файл .env. Шаблон для заполнения файла нахоится в .env.example.
 - Выполните команду старта сборки образов "docker-compose up --buld".
-- Перейдите в папку backend cd backend.
+- Перейдите в папку backend cd foodgram-project-react.
 - Выполните миграции "docker-compose exec backend python manage.py migrate".
 - Создайте суперюзера "docker-compose exec backend python manage.py createsuperuser".
 - Соберите статику "docker-compose exec backend python manage.py collectstatic ".
